@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GMC Compliance Report — {{STORE_DOMAIN}}</title>
+<style>
+  :root {
+    --bg: #0f1117;
+    --card-bg: #1a1d27;
+    --border: #2a2d3a;
+    --text: #e2e4e9;
+    --text-secondary: #8b8fa7;
+    --green: #22c55e;
+    --yellow: #eab308;
+    --orange: #f97316;
+    --red: #ef4444;
+    --blue: #3b82f6;
+    --purple: #8b5cf6;
+    --critical: #ef4444;
+    --high: #f97316;
+    --medium: #eab308;
+    --low: #3b82f6;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    padding: 2rem;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: 2rem;
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    margin-bottom: 1.5rem;
+  }
+  .header-left h1 { font-size: 1.75rem; font-weight: 700; margin-bottom: 0.25rem; }
+  .header-left .meta { color: var(--text-secondary); font-size: 0.875rem; }
+  .score-badge {
+    text-align: center;
+    padding: 1.25rem 2rem;
+    border-radius: 12px;
+    min-width: 140px;
+  }
+  .score-badge .score-num { font-size: 3rem; font-weight: 800; line-height: 1; }
+  .score-badge .score-label { font-size: 0.875rem; margin-top: 0.25rem; }
+  .score-excellent { background: #052e16; color: var(--green); border: 1px solid #166534; }
+  .score-good { background: #1a2e05; color: #84cc16; border: 1px solid #3f6212; }
+  .score-fair { background: #2e1a05; color: var(--yellow); border: 1px solid #854d0e; }
+  .score-needs-fix { background: #2e1505; color: var(--orange); border: 1px solid #9a3412; }
+  .score-high-risk { background: #2e0505; color: var(--red); border: 1px solid #991b1b; }
+  .score-critical { background: #1a0000; color: #dc2626; border: 1px solid #7f1d1d; }
+  .summary-cards {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+  }
+  .summary-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1.25rem;
+    text-align: center;
+  }
+  .summary-card .count { font-size: 2rem; font-weight: 700; }
+  .summary-card .label { color: var(--text-secondary); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; }
+  .section {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+  }
+  .section h2 {
+    font-size: 1.25rem;
+    margin-bottom: 1rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid var(--border);
+  }
+  .score-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+  }
+  .score-item {
+    padding: 1rem;
+    background: rgba(255,255,255,0.03);
+    border-radius: 8px;
+    text-align: center;
+  }
+  .score-item .cat-score { font-size: 1.5rem; font-weight: 700; }
+  .score-item .cat-name { font-size: 0.85rem; color: var(--text-secondary); margin-top: 0.25rem; }
+  .progress-bar {
+    height: 6px;
+    background: var(--border);
+    border-radius: 3px;
+    margin-top: 0.5rem;
+    overflow: hidden;
+  }
+  .progress-fill { height: 100%; border-radius: 3px; }
+  .issue-card {
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 0.75rem;
+    display: grid;
+    grid-template-columns: 80px 1fr;
+    gap: 1rem;
+    align-items: start;
+  }
+  .issue-card:last-child { margin-bottom: 0; }
+  .severity-badge {
+    display: inline-block;
+    padding: 0.2rem 0.6rem;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+  }
+  .sev-critical { background: rgba(239,68,68,0.15); color: var(--critical); }
+  .sev-high { background: rgba(249,115,22,0.15); color: var(--high); }
+  .sev-medium { background: rgba(234,179,8,0.15); color: var(--medium); }
+  .sev-low { background: rgba(59,130,246,0.15); color: var(--low); }
+  .issue-body h4 { font-size: 0.95rem; margin-bottom: 0.35rem; }
+  .issue-meta { font-size: 0.8rem; color: var(--text-secondary); }
+  .issue-meta span { margin-right: 1rem; }
+  .action-plan { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; }
+  .phase { border: 1px solid var(--border); border-radius: 8px; padding: 1rem; }
+  .phase h4 { font-size: 0.9rem; margin-bottom: 0.5rem; }
+  .phase .phase-badge {
+    display: inline-block;
+    padding: 0.15rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+  }
+  .phase-red { background: rgba(239,68,68,0.15); color: var(--red); }
+  .phase-yellow { background: rgba(234,179,8,0.15); color: var(--yellow); }
+  .phase-blue { background: rgba(59,130,246,0.15); color: var(--blue); }
+  .phase ul { list-style: none; font-size: 0.85rem; }
+  .phase li { padding: 0.25rem 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
+  .phase li:before { content: "• "; color: var(--text-secondary); }
+  .semantic-finding {
+    border-left: 3px solid var(--purple);
+    padding: 0.5rem 1rem;
+    margin-bottom: 0.75rem;
+    background: rgba(139,92,246,0.05);
+  }
+  .store-map {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0.5rem;
+  }
+  .page-status {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    background: rgba(255,255,255,0.03);
+  }
+  .status-ok { color: var(--green); }
+  .status-missing { color: var(--red); }
+  .status-thin { color: var(--yellow); }
+  .footer {
+    text-align: center;
+    color: var(--text-secondary);
+    font-size: 0.8rem;
+    padding: 2rem 0 1rem;
+    border-top: 1px solid var(--border);
+    margin-top: 1.5rem;
+  }
+  .footer a { color: var(--blue); }
+  table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+  th, td { text-align: left; padding: 0.6rem 0.75rem; border-bottom: 1px solid var(--border); }
+  th { color: var(--text-secondary); font-weight: 500; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; }
+  @media (max-width: 768px) {
+    body { padding: 1rem; }
+    .summary-cards { grid-template-columns: repeat(2, 1fr); }
+    .score-grid { grid-template-columns: repeat(2, 1fr); }
+    .action-plan { grid-template-columns: 1fr; }
+    .store-map { grid-template-columns: repeat(2, 1fr); }
+    .header { flex-direction: column; gap: 1rem; }
+    .issue-card { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-left">
+    <h1>GMC Compliance Report</h1>
+    <p class="meta">Store: <strong>{{STORE_URL}}</strong></p>
+    <p class="meta">Generated: {{DATE}}</p>
+  </div>
+  <div class="score-badge {{SCORE_CLASS}}">
+    <div class="score-num">{{OVERALL_SCORE}}</div>
+    <div class="score-label">/ 100 — {{SCORE_LABEL}}</div>
+  </div>
+</div>
+
+<div class="summary-cards">
+  <div class="summary-card">
+    <div class="count" style="color: var(--critical);">{{CRITICAL_COUNT}}</div>
+    <div class="label">Critical</div>
+  </div>
+  <div class="summary-card">
+    <div class="count" style="color: var(--high);">{{HIGH_COUNT}}</div>
+    <div class="label">High</div>
+  </div>
+  <div class="summary-card">
+    <div class="count" style="color: var(--medium);">{{MEDIUM_COUNT}}</div>
+    <div class="label">Medium</div>
+  </div>
+  <div class="summary-card">
+    <div class="count" style="color: var(--low);">{{LOW_COUNT}}</div>
+    <div class="label">Low</div>
+  </div>
+</div>
+
+<!-- Store Structure -->
+<div class="section">
+  <h2>Store Structure</h2>
+  <div class="store-map">
+    {{STORE_STRUCTURE}}
+  </div>
+  <p style="margin-top: 1rem; color: var(--text-secondary); font-size: 0.85rem;">
+    Products in catalog: {{PRODUCT_COUNT}} | Collections: {{COLLECTION_COUNT}} | Sitemap: {{SITEMAP_STATUS}}
+  </p>
+</div>
+
+<!-- Category Scores -->
+<div class="section">
+  <h2>Score Breakdown</h2>
+  <div class="score-grid">
+    {{SCORE_BREAKDOWN}}
+  </div>
+</div>
+
+<!-- Issues -->
+<div class="section">
+  <h2>Findings & Issues</h2>
+  {{ISSUE_LIST}}
+</div>
+
+<!-- AI Semantic Review -->
+<div class="section">
+  <h2>AI Semantic Review</h2>
+  <p style="color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 1rem;">
+    Content quality analysis beyond structural checks — identifies wording, tone, and inconsistency risks that may trigger GMC scrutiny.
+  </p>
+  {{SEMANTIC_FINDINGS}}
+</div>
+
+<!-- Action Plan -->
+<div class="section">
+  <h2>Action Plan</h2>
+  <div class="action-plan">
+    <div class="phase">
+      <span class="phase-badge phase-red">Phase 1 — Today</span>
+      <h4>Critical Fixes</h4>
+      <ul>{{PHASE1_ITEMS}}</ul>
+    </div>
+    <div class="phase">
+      <span class="phase-badge phase-yellow">Phase 2 — This Week</span>
+      <h4>Important Improvements</h4>
+      <ul>{{PHASE2_ITEMS}}</ul>
+    </div>
+    <div class="phase">
+      <span class="phase-badge phase-blue">Phase 3 — Ongoing</span>
+      <h4>Long-Term Optimization</h4>
+      <ul>{{PHASE3_ITEMS}}</ul>
+    </div>
+  </div>
+</div>
+
+<!-- Evidence Gallery -->
+<div class="section">
+  <h2>Evidence</h2>
+  <p style="color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 1rem;">
+    Screenshots captured during audit for key findings.
+  </p>
+  {{EVIDENCE_SCREENSHOTS}}
+</div>
+
+<div class="footer">
+  <p>Generated by Shopify GMC Compliance Auditor</p>
+  <p>This report is for reference only. Always verify against the latest <a href="https://support.google.com/merchants/answer/7052112" target="_blank">Google Merchant Center policies</a>.</p>
+</div>
+
+</body>
+</html>
