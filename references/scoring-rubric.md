@@ -53,6 +53,22 @@ Content quality thresholds:
 
 ---
 
+## 3b. Brand Authorisation Verification (Layer 2.3b)
+
+Applied on top of category scores when the store claims official brand status (official store / authorised distributor / reseller).
+
+| Situation | Adjustment |
+|-----------|-----------|
+| Full valid authorisation — authoriser == trademark owner, in date, complete proof | **+3** |
+| Authorisation present with minor gaps (no validity dates, no register link, single format) | **+1** |
+| Claims official status but NO authorisation proof at all | **-5** |
+| Authoriser ≠ trademark owner, no A→B chain (invalid / forged authorisation) | **-8** (Critical, likely suspension) |
+| Authorisation expired | **-3** |
+
+Minimum contribution: 0 (cannot drag score below zero).
+
+---
+
 ## 4. Product Data Quality (20 points)
 
 Average across sampled products (up to 10):
@@ -86,6 +102,20 @@ Product_Score = 20 * (avg_points_per_product / 20)
 | Hreflang correct (if multi-lang) | 1 | -1 missing or broken |
 | Sitemap accessible | 1 | -1 404 |
 | No console JS errors | 1 | -1 if errors on key pages |
+
+---
+
+## 5b. Purchase-Flow Redirect Deduction (Layer 2.8)
+
+Applied on top of the category scores. Detected by dynamically simulating the full buy flow and watching for jumps to non-whitelisted third-party domains.
+
+| Violation | Deduction |
+|-----------|-----------|
+| Checkout redirected to a non-whitelisted third-party domain | **-5** each (Critical) |
+| Hijacked redirect / delayed JS cloaking redirect during flow | **-5** each (Critical) |
+| Confirmed cloaking / AB redirect pattern (server-side 302 chain to other domain) | **-10** (auto High Risk band) |
+
+Whitelisted services (Shopify Payments, Stripe, PayPal, CDNs, analytics) are never deducted. Minimum score: 0.
 
 ---
 

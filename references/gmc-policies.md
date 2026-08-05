@@ -28,6 +28,23 @@ Merchants must be transparent and honest about their business, products, and pol
 - Privacy Policy
 - Terms of Service
 
+### Brand Authorisation Claims (official stores / resellers)
+
+Sites claiming "official store", "authorised distributor", or "authorised reseller" status must be able to prove it. Required proof:
+
+- Authorisation letter/certificate naming the authorising brand owner AND the authorised operator (both full legal names)
+- Validity period, territory, product scope
+- Trademark registration number(s)
+- Verifiable links (company register lookup, brand official site)
+
+Critical rule: the authorising party MUST actually own the brand. If the letter is issued by a company that is NOT the registered trademark owner — and holds no chain of authorisation from the owner (A→B→C) — the claim is misrepresentation. Verify:
+
+1. Trademark ownership in public registers: IP Australia, USPTO, EUIPO, WIPO, CNIPA
+2. Authorisation chain: owner → intermediate → site operator
+3. Brand's official "Where to Buy" / authorised-dealer list
+
+Limitation: authenticity of signatures/seals on documents requires manual verification; flag where proof is present but not independently verifiable.
+
 ---
 
 ## Insufficient Contact Information
@@ -130,6 +147,20 @@ Superlative: "#1", "best in the world", "top rated", "number one", "leading", "u
 - No automatic redirects to different domains
 - HTTPS enforced sitewide
 - No mixed content (HTTP resources on HTTPS page)
+
+### Purchase-Flow Redirect Detection (dynamic)
+
+Google flags redirected/hacked stores with a "Site hacked / 被入侵网站" indicator; redirects to unknown third-party domains are treated as cloaking / AB redirect under Abuse of Network.
+
+Dynamically simulate the full buy flow (Home → Product → Add to Cart → Cart → Checkout, without paying). At each step:
+
+1. Record the current hostname (`location.hostname`)
+2. List all outbound network requests and flag any non-primary hostname
+3. Watch for delayed JS redirects, hidden iframes, and 302 chains that leave the primary domain
+
+**Whitelisted (never flag):** Shopify Payments, Stripe, PayPal, Klarna, Afterpay, Adyen; cdn.shopify.com and standard CDNs; GA / Meta pixel analytics.
+
+**Red flags (Critical):** checkout moved to a third-party domain, click lands on an unrelated domain, hidden iframe injection, delayed JS cloaking redirect, 302 chain ending off-domain.
 
 ---
 

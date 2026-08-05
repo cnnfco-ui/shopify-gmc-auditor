@@ -106,6 +106,55 @@ Bonus policies (lower risk):
 - Warranty
 - Exchange policy
 
+### 2.3b Brand Authorisation Verification
+
+For stores claiming to be an official brand store, authorised distributor, or authorised reseller. Verify the authorisation proof AND the legitimacy of the authorising party — a forged or invalid authorisation is itself a Misrepresentation violation.
+
+Only run when the site claims official brand status (e.g., "official store", "authorised distributor", "official reseller", "brand-owned").
+
+#### Required Proof (checklist)
+
+Look for an Authorisation / certification page containing:
+- Authorising party (brand owner) full legal name + country
+- Authorised party (site operator) full legal name + entity registration (ABN/ACN or equivalent)
+- Authorisation type (Official Distributor / Reseller / Brand Store)
+- Validity period (start – end dates)
+- Authorised territory / region
+- Authorised product categories and activities
+- Trademark registration number(s)
+- Certificates provided as BOTH PDF + image, with verifiable links (e.g., government register lookup)
+
+#### Legitimacy of the Authorising Party (critical)
+
+A company that does not own the brand cannot grant authorisation. Verify the authoriser has the right to authorise:
+
+1. **Trademark ownership trace** — compare the authoriser name on the letter against the registered trademark owner in public registers (IP Australia, USPTO, EUIPO, WIPO, CNIPA). Brand created by Company A but letter signed by Company B → B lacks authority.
+2. **Chain of authorisation** — if the authoriser is not the trademark owner, it must hold its own A→B authorisation from the owner. Missing A→B link = invalid authorisation.
+3. **Brand official site cross-check** — check the brand's official "Where to Buy" / authorised-dealer list for the site operator or domain.
+4. **Entity verification** — confirm the authoriser's company registration is real; note its relationship to the brand owner (parent / subsidiary / unrelated third party).
+
+#### Verdict Rules
+
+| Situation | Verdict |
+|-----------|---------|
+| Authoriser == trademark owner | ✅ Legitimate |
+| Authoriser ≠ owner, but A→B→C chain present | ✅ Legitimate (sub-authorisation) |
+| Authoriser ≠ owner, no A→B chain | 🔴 **Critical** — Misrepresentation (invalid / forged authorisation) |
+| Trademark owner cannot be verified | 🟠 High — flag "requires manual verification" |
+
+For each finding, output:
+
+```
+Finding: Authorisation letter issued by <Company B>, but trademark registered to <Company A>
+Evidence: letter names B as authoriser; register lists A as owner; no A→B chain found
+Policy: Misrepresentation (false claim of authorised distributor)
+Risk: Critical
+```
+
+**Limitation:** automated checks cannot confirm the authenticity of signatures / seals on authorisation documents. Where proof looks complete but cannot be independently verified, flag "requires manual verification".
+
+---
+
 ### 2.4 Pricing Audit
 
 Compare prices across pages:
@@ -150,6 +199,53 @@ At each step, take a snapshot. Confirm:
 - All links in path are functional
 - No dead ends, no redirect loops
 - Mobile nav works (resize to 375px and test)
+
+### 2.8 Purchase-Flow Simulation & Third-Party Redirect Detection
+
+DYNAMIC simulation. Run the full buy flow for real and watch for any redirect / jump to a third-party domain at every step. This catches cloaking, AB redirects, and "site hacked" behavior that Google flags as 被入侵网站.
+
+Never complete payment — stop at the checkout page after recording all evidence.
+
+#### Procedure
+
+Run the flow end-to-end, WITHOUT paying:
+
+```
+Home → Product (select variant if any) → Add to Cart → Cart → Checkout
+```
+
+At **every step**:
+
+1. Record the current page URL and hostname (`browser_evaluate: () => location.hostname`)
+2. Pull all outbound network requests with `browser_network_requests` — flag any request whose hostname differs from the store's primary domain
+3. Check for client-side redirects: `location.href` writes, meta refresh, delayed JS redirects — note whether the URL leaves the primary domain
+
+#### Red Flags (report each as a finding)
+
+| # | Signal | Meaning |
+|---|--------|---------|
+| 1 | Checkout redirects to a third-party domain | Checkout moved off-site (scam checkout / AB redirect) |
+| 2 | Clicking product/CTA lands on an unrelated domain | Hijacked / cloaked redirect |
+| 3 | Hidden iframe(s) loading third-party content during the flow | Invisible redirect / tracking injection |
+| 4 | Page loads, then JS-redirects after a delay | Cloaking pattern (delayed redirect) |
+| 5 | 302 chain ends on a non-primary domain | Server-side redirect |
+
+#### Whitelist (do NOT flag)
+
+- Integrated payment providers: Shopify Payments, Stripe, PayPal, Klarna, Afterpay, Adyen
+- Standard CDNs / static assets: cdn.shopify.com, image CDNs, font/CDN hosts
+- Legitimate analytics: GA, Meta pixel, standard trackers
+
+Any redirect that lands on an **unknown domain outside the whitelist** → flag **Critical/High**, map to GMC `Abuse of network`, and note the Google "Site hacked / 被入侵网站" indicator (possible cloaking / AB redirect violation).
+
+For each finding, output:
+
+```
+Finding: Checkout redirects to <third-party domain>
+Evidence: at checkout step, URL changed from <primary> to <other> / request to <url>
+Policy: Abuse of network (cloaking / malicious redirect)
+Risk: Critical
+```
 
 ---
 
@@ -229,7 +325,7 @@ Map EVERY finding to a Google GMC policy. Never report an issue without a policy
 | **Unclear shipping** | Missing shipping info, no delivery timeline, no carrier info |
 | **Incomplete product data** | Missing GTIN/MPN/brand, inaccurate availability, mismatched prices |
 | **Image quality** | Promotional overlay on product image, watermarks, placeholders |
-| **Abuse of network** | Malware, phishing, cloaking, malicious redirects |
+| **Abuse of network** | Malware, phishing, cloaking, malicious redirects; purchase-flow redirects to non-whitelisted third-party domains (Layer 2.8) |
 
 For each finding, output:
 ```
@@ -331,7 +427,7 @@ Save the report to the user's desktop or current working directory as `gmc-audit
 ```
 1. Navigate to store homepage (Playwright)
 2. Store Discovery — crawl nav, footer, sitemaps
-3. Store Audit — 7 modules (identity, contact, policy, pricing, trust, technical, navigation)
+3. Store Audit — 8 modules (identity, contact, policy, pricing, trust, technical, navigation, purchase-flow redirect)
 4. Product Audit — sample 10 products, structured data, claims, buy flow
 5. AI Semantic Audit — read key pages, evaluate content quality
 6. GMC Policy Mapping — map every finding to Google policy
