@@ -65,6 +65,14 @@ Limitation: authenticity of signatures/seals on documents requires manual verifi
 - No physical location for physical goods
 - Contact page 404 or thin content
 
+### Brand-domain Email判定标准
+
+Compare email domains case-insensitively, ignoring the `www.` prefix. PASS: email `@` domain matches the site's primary domain (any prefix like support@/info@ is fine); official brand domains are also fine. VIOLATION: free-mail providers (gmail/outlook/yahoo/qq/163) or domains with no traceable link to the brand.
+
+### Anti-hallucination rule (CRITICAL)
+
+Emails MUST be extracted verbatim from actual page text. NEVER infer or fabricate an email from a company legal name — e.g., "Hypewave Technology Pty Ltd" appearing in a policy does NOT mean support@hypewave.com.au exists. An email-mismatch finding requires the exact quoted email strings as evidence; without them, no finding. If no email is on a page, say "no email found".
+
 ---
 
 ## Unavailable Promotions

@@ -87,6 +87,27 @@ Navigate to Contact page. Check:
 - Contact form functional (fill and submit if possible)
 - Response time承诺 (if stated)
 
+#### Brand-domain Email判定标准
+
+Compare email domains case-insensitively and ignore the `www.` prefix when matching the site's primary domain.
+
+PASS (compliant, do NOT flag):
+- Email `@` domain matches the site's primary domain, e.g. `support@atuman.com.au` with `www.atuman.com.au`
+- Any prefix on the same brand domain (`support@`, `info@`, `service@`) — a different prefix is NOT an inconsistency
+- Other official domains owned by the brand (verifiable via brand site / authorisation page)
+
+VIOLATION (flag as risk):
+- Free-mail providers: @gmail.com, @outlook.com, @yahoo.com, @qq.com, @163.com, etc.
+- Email domain with no traceable connection to the brand
+- Email domain clearly different from the site domain AND not brand-owned
+
+#### Anti-hallucination rule (CRITICAL)
+
+- Emails MUST be extracted verbatim from the actual page text. NEVER infer, guess, or fabricate an email from company names, domain names, or brand names.
+- An email-mismatch finding REQUIRES the exact email strings as quoted evidence from the page. No quoted email = no finding.
+- A company legal name (e.g., "Hypewave Technology Pty Ltd") appearing in a policy does NOT imply an email like support@hypewave.com.au exists. Do not connect legal entity names to invented emails.
+- If no email is found on a page, report "no email found" — do not invent one.
+
 ### 2.3 Policy Audit
 
 Navigate to EACH policy page. For each:
